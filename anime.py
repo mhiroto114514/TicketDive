@@ -75,14 +75,51 @@ def human_move_and_click_speedy(driver, element):
         element.click()
 
 def human_scroll_into_view(driver, element):
+    """
+    マウスホイールをコロコロ回して、対象が画面内に入ってくるまでスクロールする。
+    JSによる強制スクロールではなく、物理的なホイール操作をシミュレートする。
+    """
     try:
-        actions = ActionChains(driver)
-        actions.scroll_to_element(element).perform()
-        pretty_sleep(0.05, 0.1)
+        # 要素のY座標を取得
+        element_y = element.location['y']
+        
+        # 現在のスクロール位置を取得
+        current_scroll_y = driver.execute_script("return window.scrollY;")
+        
+        # 画面の高さ
+        viewport_height = driver.execute_script("return window.innerHeight;")
+        
+        # 要素が今の画面より下にあるか上にあるか判定
+        # (要素の位置) - (現在のスクロール位置 + 画面の半分)
+        delta_y = element_y - (current_scroll_y + (viewport_height / 2))
+        
+        # 距離があまりに近ければスクロールしない
+        if abs(delta_y) < 100:
+            return
 
+        # ActionChainsのホイール操作を使う
+        actions = ActionChains(driver)
+        
+        # 一気にスクロールせず、数回に分けてコロコロする（人間演出）
+        steps = random.randint(3, 6) # 3〜6回に分割
+        step_y = delta_y / steps
+        
+        for _ in range(steps):
+            # scroll_by_amount は Selenium 4.2+ の機能
+            # delta_x=0, delta_y=step_y
+            actions.scroll_by_amount(0, int(step_y)).perform()
+            
+            # コロコロ...コロコロ...という間のゆらぎ
+            time.sleep(random.uniform(0.05, 0.15))
+
+        # 最後に念のため、要素がしっかり見える位置にあるか確認（微調整）
+        # Bot検知に引っかからない安全なJSスクロールを保険として入れておく
+        # (centerではなくnearestにすることで、画面内にあるなら動かないようにする)
+        driver.execute_script("arguments[0].scrollIntoView({behavior: 'auto', block: 'nearest'});", element)
+        
     except Exception:
+        # 万が一ホイール操作がコケたら、元のコードで保険をかける
         driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", element)
-        pretty_sleep(0.05, 0.1)
 
 
 # Chrome（undetected）起動設定
@@ -258,7 +295,7 @@ def main():
         EC.presence_of_element_located((By.XPATH, submit_button_xpath))
     )
     
-    pretty_sleep(0.4, 0.5)
+    pretty_sleep(0.6, 0.7)
     # ★★★ ここから修正：グルグル対策のリトライクリック ★★★
     print("申し込みボタンへのクリックを試行します（オーバーレイ待機中）...")
     
