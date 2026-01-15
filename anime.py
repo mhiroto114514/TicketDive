@@ -15,7 +15,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.action_chains import ActionChains
 
 # ログイン情報（Botが毎回これを入力します）
-EMAIL = "match114@icloud.com"
+EMAIL = "m.hiroto114@gmail.com"
 PASSWORD = "match114"
 
 # 申し込み情報
@@ -101,7 +101,7 @@ def human_scroll_into_view(driver, element):
         actions = ActionChains(driver)
         
         # 一気にスクロールせず、数回に分けてコロコロする（人間演出）
-        steps = random.randint(3, 6) # 3〜6回に分割
+        steps = random.randint(2, 4) # 3〜6回に分割
         step_y = delta_y / steps
         
         for _ in range(steps):
@@ -110,7 +110,7 @@ def human_scroll_into_view(driver, element):
             actions.scroll_by_amount(0, int(step_y)).perform()
             
             # コロコロ...コロコロ...という間のゆらぎ
-            time.sleep(random.uniform(0.05, 0.15))
+            time.sleep(random.uniform(0.05, 0.1))
 
         # 最後に念のため、要素がしっかり見える位置にあるか確認（微調整）
         # Bot検知に引っかからない安全なJSスクロールを保険として入れておく
@@ -295,7 +295,7 @@ def main():
         EC.presence_of_element_located((By.XPATH, submit_button_xpath))
     )
     
-    pretty_sleep(0.6, 0.7)
+    pretty_sleep(0.3, 0.4)
     # ★★★ ここから修正：グルグル対策のリトライクリック ★★★
     print("申し込みボタンへのクリックを試行します（オーバーレイ待機中）...")
     
